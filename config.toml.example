@@ -1,0 +1,40 @@
+## Example configuration: copy to `config.toml` and adjust as needed.
+##
+## Notes
+## - You can define multiple `[[forwarding]]` rules. Each rule starts a persistent SSH port forward with auto-reconnect.
+## - `ssh_password` is optional. When set, the tool will run `ssh` under a PTY (portable-pty) and respond to the password prompt.
+##   Prefer `ssh_key_path` / ssh-agent where possible.
+## - `local_bind` defaults to "0.0.0.0" (listen on all interfaces). Use "127.0.0.1" for localhost-only access.
+
+[[forwarding]]
+## Local bind address (optional; default "0.0.0.0")
+local_bind = "127.0.0.1"
+## Local port
+local_port = 3316
+## Remote target address (host:port; also supports [ipv6]:port)
+remote_address = "db.internal:3306"
+## SSH destination (hostname/IP, or a Host alias from ~/.ssh/config)
+ssh_host = "bastion.example.com"
+## SSH port (optional; default 22)
+ssh_port = 22
+## SSH username
+ssh_user = "your-ssh-user"
+## SSH private key path (optional; recommended with ssh-agent)
+ssh_key_path = "~/.ssh/your_private_key"
+## Extra arguments passed through to ssh (optional)
+## Common use cases: StrictHostKeyChecking, JumpHost (-J), ProxyCommand, etc.
+ssh_extra_args = [
+  "-o", "StrictHostKeyChecking=accept-new",
+]
+## SSH password (optional)
+# ssh_password = "password"
+
+[[forwarding]]
+local_bind = "127.0.0.1"
+local_port = 50051
+remote_address = "grpc.internal:50051"
+ssh_host = "bastion.example.com"
+ssh_user = "your-ssh-user"
+ssh_key_path = "~/.ssh/your_private_key"
+ssh_extra_args = []
+
