@@ -25,8 +25,8 @@ fn default_ssh_port() -> u16 {
 }
 
 fn default_local_bind() -> String {
-    // Keep consistent with legacy behavior: listen on 0.0.0.0
-    "0.0.0.0".to_string()
+    // Default to localhost for security: listen on 127.0.0.1
+    "127.0.0.1".to_string()
 }
 
 #[derive(Deserialize, Debug)]

@@ -43,7 +43,7 @@ ssh-tunnel-manager
 Structure:
 
 - `[[forwarding]]`: one forwarding rule (repeatable)
-- **local_bind**: local bind address (optional, default `0.0.0.0`)
+- **local_bind**: local bind address (optional, default `127.0.0.1`)
 - **local_port**: local listening port (required)
 - **remote_address**: remote target `host:port` (required; supports `[ipv6]:port`)
 - **ssh_host**: SSH destination (host/IP, or a `Host` alias from `~/.ssh/config`)

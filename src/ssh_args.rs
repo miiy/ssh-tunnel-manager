@@ -68,7 +68,8 @@ pub fn build_invocation(rule: &ForwardingRule) -> Result<Invocation, String> {
     ssh_args.push("-o".to_string());
     ssh_args.push("ConnectTimeout=10".to_string());
 
-    // Allow binding to 0.0.0.0 (same as legacy behavior)
+    // Add -g option to allow remote hosts to connect to local forwarded ports
+    // Only needed when binding to non-localhost addresses (e.g., 0.0.0.0)
     if rule.local_bind != "127.0.0.1" && rule.local_bind != "localhost" {
         ssh_args.push("-g".to_string());
     }

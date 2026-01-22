@@ -43,7 +43,7 @@ ssh-tunnel-manager
 配置文件结构：
 
 - `[[forwarding]]`：一条转发规则（可写多条）
-- **local_bind**：本地监听地址（可选，默认 `0.0.0.0`）
+- **local_bind**：本地监听地址（可选，默认 `127.0.0.1`）
 - **local_port**：本地监听端口（必填）
 - **remote_address**：远端目标 `host:port`（必填，支持 `[ipv6]:port`）
 - **ssh_host**：SSH 目标（host/IP，或 `~/.ssh/config` 里的 Host alias）

@@ -4,10 +4,10 @@
 ## - You can define multiple `[[forwarding]]` rules. Each rule starts a persistent SSH port forward with auto-reconnect.
 ## - `ssh_password` is optional. When set, the tool will run `ssh` under a PTY (portable-pty) and respond to the password prompt.
 ##   Prefer `ssh_key_path` / ssh-agent where possible.
-## - `local_bind` defaults to "0.0.0.0" (listen on all interfaces). Use "127.0.0.1" for localhost-only access.
+## - `local_bind` defaults to "127.0.0.1" (localhost-only). Use "0.0.0.0" to listen on all interfaces.
 
 [[forwarding]]
-## Local bind address (optional; default "0.0.0.0")
+## Local bind address (optional; default "127.0.0.1")
 local_bind = "127.0.0.1"
 ## Local port
 local_port = 3316
