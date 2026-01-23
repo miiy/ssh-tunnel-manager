@@ -1,4 +1,4 @@
-use std::{io, sync::mpsc};
+use std::{io, sync::mpsc, time::Instant};
 
 use tokio::sync::watch;
 use tokio::time::{sleep, Duration};
@@ -54,16 +54,21 @@ pub async fn supervise_ssh(rule: ForwardingRule, mut shutdown: watch::Receiver<b
             run_ssh_with_pty(&inv2, password.as_deref(), kill_rx)
         });
 
+        // Record start time to determine if connection was successfully established
+        let start_time = Instant::now();
         // Wait for ssh to exit or shutdown signal; stop retrying on auth failure.
         let mut should_reset_attempt = false;
+
+        // Note: If SSH process runs successfully, select! will wait
         tokio::select! {
             res = &mut handle => {
                 match res {
                     // double result: spawn_blocking exit ok, run_ssh_with_pty exit ok
                     Ok(Ok(exit)) => {
+                        let elapsed = start_time.elapsed();
                         eprintln!(
-                            "ssh exited ({}:{} -> {}): code={}",
-                            rule.local_bind, rule.local_port, rule.remote_address, exit.code
+                            "ssh exited ({}:{} -> {}): code={}, elapsed={:?}",
+                            rule.local_bind, rule.local_port, rule.remote_address, exit.code, elapsed
                         );
                         // Auth failure: stop retrying this rule to avoid log spam.
                         if exit.auth_failed {
@@ -73,8 +78,8 @@ pub async fn supervise_ssh(rule: ForwardingRule, mut shutdown: watch::Receiver<b
                             );
                             return Ok(());
                         }
-                        // Reset attempt counter if exit code is 0 (successful connection)
-                        if exit.code == 0 {
+                        // Reset attempt if process ran for at least 5 seconds (connection was established before disconnect)
+                        if elapsed.as_secs() >= 5 {
                             should_reset_attempt = true;
                         }
                     }
