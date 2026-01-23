@@ -22,6 +22,15 @@ fn format_rule_full(rule: &ForwardingRule) -> String {
 
 // Supervise a single forwarding rule: run ssh, auto-restart on disconnect, stop on auth failure or shutdown.
 pub async fn supervise_ssh(rule: ForwardingRule, mut shutdown: watch::Receiver<bool>) -> io::Result<()> {
+    // Build ssh command-line invocation from rule config once (rule doesn't change in the loop).
+    let inv = match build_invocation(&rule) {
+        Ok(i) => i,
+        Err(e) => {
+            eprintln!("Config error for {}: {}", format_rule_full(&rule), e);
+            return Err(io::Error::new(io::ErrorKind::InvalidInput, e));
+        }
+    };
+
     let mut attempt: u32 = 0;
 
     // Restart loop: reconnect on failure with exponential backoff (max 20s).
@@ -29,15 +38,6 @@ pub async fn supervise_ssh(rule: ForwardingRule, mut shutdown: watch::Receiver<b
         if *shutdown.borrow() {
             break;
         }
-
-        // Build ssh command-line invocation from rule config.
-        let inv = match build_invocation(&rule) {
-            Ok(i) => i,
-            Err(e) => {
-                eprintln!("Config error for {}: {}", format_rule_full(&rule), e);
-                return Err(io::Error::new(io::ErrorKind::InvalidInput, e));
-            }
-        };
 
         println!("Starting ssh forward: {}", format_rule_full(&rule));
 
@@ -55,6 +55,7 @@ pub async fn supervise_ssh(rule: ForwardingRule, mut shutdown: watch::Receiver<b
         });
 
         // Wait for ssh to exit or shutdown signal; stop retrying on auth failure.
+        let mut should_reset_attempt = false;
         tokio::select! {
             res = &mut handle => {
                 match res {
@@ -71,6 +72,10 @@ pub async fn supervise_ssh(rule: ForwardingRule, mut shutdown: watch::Receiver<b
                                 format_rule_full(&rule)
                             );
                             return Ok(());
+                        }
+                        // Reset attempt counter if exit code is 0 (successful connection)
+                        if exit.code == 0 {
+                            should_reset_attempt = true;
                         }
                     }
                     Ok(Err(e)) => {
@@ -98,8 +103,14 @@ pub async fn supervise_ssh(rule: ForwardingRule, mut shutdown: watch::Receiver<b
             break;
         }
 
-        // Auto-restart on disconnect/exit (with backoff)
-        attempt = attempt.saturating_add(1);
+        // Auto-restart on disconnect/exit (with exponential backoff)
+        if should_reset_attempt {
+            // Connection was successful (exit code 0), reset attempt counter
+            attempt = 0;
+        } else {
+            // Connection failed, increment attempt counter for exponential backoff
+            attempt = attempt.saturating_add(1);
+        }
         let backoff = Duration::from_secs((attempt.min(10) as u64).saturating_mul(2).max(1));
         eprintln!(
             "Restarting in {:?} ({}:{} -> {})",
