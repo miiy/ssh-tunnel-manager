@@ -38,6 +38,12 @@ cargo install --path .
 stm
 ```
 
+Or install from GitHub:
+
+```bash
+cargo install --git https://github.com/miiy/ssh-tunnel-manager.git
+```
+
 ### Configuration (`config.toml`)
 
 Structure:

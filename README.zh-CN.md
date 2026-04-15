@@ -38,6 +38,12 @@ cargo install --path .
 stm
 ```
 
+或从 GitHub 安装：
+
+```bash
+cargo install --git https://github.com/miiy/ssh-tunnel-manager.git
+```
+
 ### 配置（`config.toml`）
 
 配置文件结构：
