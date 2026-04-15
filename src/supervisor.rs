@@ -3,21 +3,32 @@ use std::{io, sync::mpsc, time::Instant};
 use tokio::sync::watch;
 use tokio::time::{sleep, Duration};
 
-use crate::config::{Config, ForwardingRule};
+use crate::config::{Config, ForwardingRule, TunnelMode};
 use crate::runner::run_ssh_with_pty;
 use crate::ssh_args::{build_invocation, Invocation};
 
 // format rule full information, for logging
 fn format_rule_full(rule: &ForwardingRule) -> String {
-    format!(
-        "local {}:{} -> {} via {}@{}:{}",
-        rule.local_bind,
-        rule.local_port,
-        rule.remote_address,
-        rule.ssh_user,
-        rule.ssh_host,
-        rule.ssh_port
-    )
+    match rule.mode {
+        TunnelMode::Local => format!(
+            "local {}:{} -> {} via {}@{}:{}",
+            rule.local_bind,
+            rule.local_port,
+            rule.remote_address,
+            rule.ssh_user,
+            rule.ssh_host,
+            rule.ssh_port
+        ),
+        TunnelMode::Remote => format!(
+            "remote {} <- {}:{} via {}@{}:{}",
+            rule.remote_address,
+            rule.local_bind,
+            rule.local_port,
+            rule.ssh_user,
+            rule.ssh_host,
+            rule.ssh_port
+        ),
+    }
 }
 
 // Supervise a single forwarding rule: run ssh, auto-restart on disconnect, stop on auth failure or shutdown.

@@ -495,7 +495,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "ssh-tunnel-manager"
+name = "stm"
 version = "0.1.0"
 dependencies = [
  "clap",

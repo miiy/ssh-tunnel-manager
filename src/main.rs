@@ -2,7 +2,7 @@ use clap::Parser;
 use std::path::PathBuf;
 
 #[derive(Parser)]
-#[command(name = "ssh-tunnel-manager", version, about = "Manage SSH port forwarding from a TOML config")]
+#[command(name = "stm", version, about = "Manage SSH port forwarding from a TOML config")]
 struct Cli {
     /// Path to the TOML configuration file
     #[arg(short, long, default_value = "config.toml", value_name = "PATH")]
@@ -21,5 +21,5 @@ async fn main() -> std::io::Result<()> {
                 "config path is not valid UTF-8",
             )
         })?;
-    ssh_tunnel_manager::run(path).await
+    stm::run(path).await
 }

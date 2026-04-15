@@ -1,6 +1,6 @@
 use std::path::PathBuf;
 
-use crate::config::ForwardingRule;
+use crate::config::{ForwardingRule, TunnelMode};
 
 #[derive(Debug, Clone)]
 pub struct Invocation {
@@ -69,16 +69,37 @@ pub fn build_invocation(rule: &ForwardingRule) -> Result<Invocation, String> {
     ssh_args.push("ConnectTimeout=10".to_string());
 
     // Add -g option to allow remote hosts to connect to local forwarded ports
-    // Only needed when binding to non-localhost addresses (e.g., 0.0.0.0)
-    if rule.local_bind != "127.0.0.1" && rule.local_bind != "localhost" {
+    // Only needed for Local mode when binding to non-localhost addresses (e.g., 0.0.0.0)
+    if matches!(rule.mode, TunnelMode::Local)
+        && rule.local_bind != "127.0.0.1"
+        && rule.local_bind != "localhost"
+    {
         ssh_args.push("-g".to_string());
     }
 
-    let forward_spec = format!(
-        "{}:{}:{}:{}",
-        rule.local_bind, rule.local_port, dst_host, dst_port
-    );
-    ssh_args.push("-L".to_string());
+    let (flag, forward_spec) = match rule.mode {
+        TunnelMode::Local => {
+            // -L local_bind:local_port:dst_host:dst_port
+            (
+                "-L",
+                format!(
+                    "{}:{}:{}:{}",
+                    rule.local_bind, rule.local_port, dst_host, dst_port
+                ),
+            )
+        }
+        TunnelMode::Remote => {
+            // -R remote_bind:remote_port:local_bind:local_port
+            (
+                "-R",
+                format!(
+                    "{}:{}:{}:{}",
+                    dst_host, dst_port, rule.local_bind, rule.local_port
+                ),
+            )
+        }
+    };
+    ssh_args.push(flag.to_string());
     ssh_args.push(forward_spec);
 
     ssh_args.push("-p".to_string());

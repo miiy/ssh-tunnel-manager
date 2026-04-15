@@ -1,4 +1,4 @@
-# ssh-tunnel-manager
+# stm
 
 English | [简体中文](README.zh-CN.md)
 
@@ -35,7 +35,7 @@ Or install locally:
 
 ```bash
 cargo install --path .
-ssh-tunnel-manager
+stm
 ```
 
 ### Configuration (`config.toml`)

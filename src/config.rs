@@ -1,8 +1,18 @@
 use serde::Deserialize;
 use std::{fs, io};
 
+#[derive(Deserialize, Debug, Clone, Default)]
+#[serde(rename_all = "lowercase")]
+pub enum TunnelMode {
+    #[default]
+    Local,  // -L (default, backward compatible)
+    Remote, // -R
+}
+
 #[derive(Deserialize, Debug, Clone)]
 pub struct ForwardingRule {
+    #[serde(default)]
+    pub mode: TunnelMode,
     pub local_port: u16,
     #[serde(default = "default_local_bind")]
     pub local_bind: String,

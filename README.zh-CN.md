@@ -1,4 +1,4 @@
-## ssh-tunnel-manager
+## stm
 
 [English](README.md) | 简体中文
 
@@ -35,7 +35,7 @@ cargo run --release
 
 ```bash
 cargo install --path .
-ssh-tunnel-manager
+stm
 ```
 
 ### 配置（`config.toml`）
