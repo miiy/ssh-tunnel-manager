@@ -53,9 +53,12 @@ pub fn build_invocation(rule: &ForwardingRule) -> Result<Invocation, String> {
     ssh_args.push("StrictHostKeyChecking=accept-new".to_string());
     // KeepAlive: detect disconnects and exit promptly
     ssh_args.push("-o".to_string());
-    ssh_args.push("ServerAliveInterval=60".to_string());
+    ssh_args.push(format!("ServerAliveInterval={}", rule.server_alive_interval));
     ssh_args.push("-o".to_string());
-    ssh_args.push("ServerAliveCountMax=3".to_string());
+    ssh_args.push(format!(
+        "ServerAliveCountMax={}",
+        rule.server_alive_count_max
+    ));
     ssh_args.push("-o".to_string());
     ssh_args.push("TCPKeepAlive=yes".to_string());
     // Unified PTY mode: PTY can handle all interactive prompts (password, passphrase, host key, etc.)
@@ -67,7 +70,7 @@ pub fn build_invocation(rule: &ForwardingRule) -> Result<Invocation, String> {
     }
     // Connection timeout
     ssh_args.push("-o".to_string());
-    ssh_args.push("ConnectTimeout=10".to_string());
+    ssh_args.push(format!("ConnectTimeout={}", rule.connect_timeout));
 
     // Check if any local forward binds to a non-localhost address (for -g flag)
     let needs_gateway = rule.forwards.iter().any(|f| {

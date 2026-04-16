@@ -54,6 +54,9 @@ stm /path/to/config    # 使用指定配置文件
   - **ssh_user**：SSH 用户名（必填）
   - **ssh_key_path**：私钥路径（可选，推荐；支持 `~`）
   - **ssh_password**：密码（可选；PTY 会自动响应密码/passphrase 提示）
+  - **server_alive_interval**：SSH `ServerAliveInterval` 秒数（可选，默认 `60`）
+  - **server_alive_count_max**：SSH `ServerAliveCountMax`（可选，默认 `3`）
+  - **connect_timeout**：SSH `ConnectTimeout` 秒数（可选，默认 `10`）
   - **ssh_extra_args**：额外透传给 `ssh` 的参数数组（可选）
 
 示例：
@@ -112,4 +115,3 @@ forwards = [
 ## 许可证
 
 本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件。
-

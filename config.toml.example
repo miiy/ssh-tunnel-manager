@@ -13,6 +13,9 @@
 ##   ssh_user       = "your-ssh-user"          # SSH username (required)
 ##   ssh_key_path   = "~/.ssh/id_ed25519"      # SSH private key path (optional)
 ##   ssh_password   = "your-password"          # SSH password (optional; prefer ssh_key_path)
+##   server_alive_interval  = 60               # SSH ServerAliveInterval in seconds. Default: 60
+##   server_alive_count_max = 3                # SSH ServerAliveCountMax. Default: 3
+##   connect_timeout        = 10               # SSH ConnectTimeout in seconds. Default: 10
 ##   ssh_extra_args = [                        # Extra arguments passed to ssh (optional)
 ##     "-J", "jumpuser@jumphost:22",
 ##   ]

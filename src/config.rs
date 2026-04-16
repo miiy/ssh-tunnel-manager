@@ -35,10 +35,28 @@ pub struct ForwardingRule {
     pub ssh_password: Option<String>,
     #[serde(default)]
     pub ssh_extra_args: Vec<String>,
+    #[serde(default = "default_server_alive_interval")]
+    pub server_alive_interval: u16,
+    #[serde(default = "default_server_alive_count_max")]
+    pub server_alive_count_max: u8,
+    #[serde(default = "default_connect_timeout")]
+    pub connect_timeout: u16,
 }
 
 fn default_ssh_port() -> u16 {
     22
+}
+
+fn default_server_alive_interval() -> u16 {
+    60
+}
+
+fn default_server_alive_count_max() -> u8 {
+    3
+}
+
+fn default_connect_timeout() -> u16 {
+    10
 }
 
 #[derive(Deserialize, Debug)]

@@ -54,6 +54,9 @@ Structure:
   - **ssh_user**: SSH username (required)
   - **ssh_key_path**: private key path (optional; supports `~`; recommended)
   - **ssh_password**: password (optional; PTY will automatically answer password/passphrase prompts)
+  - **server_alive_interval**: SSH `ServerAliveInterval` in seconds (optional, default `60`)
+  - **server_alive_count_max**: SSH `ServerAliveCountMax` (optional, default `3`)
+  - **connect_timeout**: SSH `ConnectTimeout` in seconds (optional, default `10`)
   - **ssh_extra_args**: extra args passed through to `ssh` (optional)
 
 Example:
