@@ -3,6 +3,7 @@ use std::{io, thread};
 use std::io::{Read, Write};
 
 use portable_pty::{CommandBuilder, PtySize};
+use tracing::error;
 
 use crate::ssh_args::Invocation;
 
@@ -113,10 +114,9 @@ pub(crate) fn run_ssh_with_pty(
                 // Safer default: do NOT auto-accept unknown host keys.
                 // If this prompt appears, instruct user to configure StrictHostKeyChecking in ssh_extra_args.
                 if lower.contains("are you sure you want to continue connecting") {
-                    eprintln!(
-                        "\nEncountered host key confirmation prompt. \
-Please add an ssh option like: -o StrictHostKeyChecking=accept-new (recommended) \
-or pre-populate known_hosts, then retry."
+                    error!(
+                        "Encountered host key confirmation prompt. Please add an ssh option like: \
+-o StrictHostKeyChecking=accept-new (recommended) or pre-populate known_hosts, then retry.",
                     );
                     let _ = child.kill();
                     let _ = child.wait();
@@ -138,7 +138,7 @@ or pre-populate known_hosts, then retry."
                 // Password prompt: answer only once to avoid infinite loops.
                 if lower.contains("password:") || lower.contains("password for") {
                     if sent_password {
-                        eprintln!("\nPassword was requested again; aborting. (Check ssh_password)");
+                        error!("Password was requested again; aborting. (Check ssh_password)");
                         let _ = child.kill();
                         let _ = child.wait();
                         let _ = reader_handle.join();
@@ -230,4 +230,3 @@ or pre-populate known_hosts, then retry."
     let _ = reader_handle.join();
     Ok(PtyExit { code, auth_failed })
 }
-

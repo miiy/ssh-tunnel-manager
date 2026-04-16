@@ -55,7 +55,7 @@ pub fn build_invocation(rule: &ForwardingRule) -> Result<Invocation, String> {
     ssh_args.push("-o".to_string());
     ssh_args.push("ServerAliveInterval=60".to_string());
     ssh_args.push("-o".to_string());
-    ssh_args.push("ServerAliveCountMax=5".to_string());
+    ssh_args.push("ServerAliveCountMax=3".to_string());
     ssh_args.push("-o".to_string());
     ssh_args.push("TCPKeepAlive=yes".to_string());
     // Unified PTY mode: PTY can handle all interactive prompts (password, passphrase, host key, etc.)

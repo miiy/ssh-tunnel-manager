@@ -10,3 +10,6 @@ tokio = { version = "1.49", features = ["full"] }
 toml = "0.9.11"
 shellexpand = "3.1"
 portable-pty = "0.9"
+time = { version = "0.3", features = ["formatting", "local-offset", "macros"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["fmt", "time"] }

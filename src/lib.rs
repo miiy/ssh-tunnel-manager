@@ -11,4 +11,3 @@ pub async fn run(config_path: &str) -> io::Result<()> {
     let config = config::load_config(config_path)?;
     supervisor::run(config).await
 }
-
