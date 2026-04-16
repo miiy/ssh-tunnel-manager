@@ -2,7 +2,7 @@
 
 English | [简体中文](README.zh-CN.md)
 
-A tool to manage **multiple long-running SSH local port forwards** from `config.toml`. Each `[[forwarding]]` rule runs a persistent `ssh -N -L ...` process with auto-reconnect.
+A tool to manage **multiple long-running SSH port forwards** from `config.toml`. Each `[[forwarding]]` rule runs a persistent `ssh -N -L/-R ...` process with auto-reconnect, supporting multiple port forwards in a single SSH connection.
 
 ### Why this tool?
 
@@ -23,25 +23,21 @@ The core value of this tool is **auto-restart**: it automatically reconnects whe
   - macOS/Linux: usually preinstalled
   - Windows: install OpenSSH (or ensure `ssh.exe` is available)
 
-### Run
-
-Put `config.toml` in the project root, then:
+### Install
 
 ```bash
-cargo run --release
-```
-
-Or install locally:
-
-```bash
-cargo install --path .
-stm
-```
-
-Or install from GitHub:
-
-```bash
+# From GitHub
 cargo install --git https://github.com/miiy/ssh-tunnel-manager.git
+
+# Or from local source
+cargo install --path .
+```
+
+Then run with your config:
+
+```bash
+stm                    # uses config.toml in current directory
+stm /path/to/config    # uses specified config file
 ```
 
 ### Configuration (`config.toml`)
@@ -49,17 +45,29 @@ cargo install --git https://github.com/miiy/ssh-tunnel-manager.git
 Structure:
 
 - `[[forwarding]]`: one forwarding rule (repeatable)
-- **local_bind**: local bind address (optional, default `127.0.0.1`)
-- **local_port**: local listening port (required)
-- **remote_address**: remote target `host:port` (required; supports `[ipv6]:port`)
-- **ssh_host**: SSH destination (host/IP, or a `Host` alias from `~/.ssh/config`)
-- **ssh_port**: SSH port (optional, default `22`)
-- **ssh_user**: SSH username (required)
-- **ssh_key_path**: private key path (optional; supports `~`; recommended)
-- **ssh_password**: password (optional; PTY will automatically answer password/passphrase prompts)
-- **ssh_extra_args**: extra args passed through to `ssh` (optional)
+  - **forwards**: array of port-forward mappings (required)
+    - **mode**: `"local"` (-L) or `"remote"` (-R) (optional, default `"local"`)
+    - **local_address**: local bind address and port, e.g. `"127.0.0.1:3316"` or `"0.0.0.0:8080"` (required)
+    - **remote_address**: remote target `host:port` (required; supports `[ipv6]:port`)
+  - **ssh_host**: SSH destination (host/IP, or a `Host` alias from `~/.ssh/config`)
+  - **ssh_port**: SSH port (optional, default `22`)
+  - **ssh_user**: SSH username (required)
+  - **ssh_key_path**: private key path (optional; supports `~`; recommended)
+  - **ssh_password**: password (optional; PTY will automatically answer password/passphrase prompts)
+  - **ssh_extra_args**: extra args passed through to `ssh` (optional)
 
-See `config.toml.example` for a working example.
+Example:
+
+```toml
+[[forwarding]]
+ssh_host = "bastion.example.com"
+ssh_user = "deploy"
+ssh_key_path = "~/.ssh/id_ed25519"
+forwards = [
+  { local_address = "127.0.0.1:3316", remote_address = "db.internal:3306" },
+  { mode = "remote", local_address = "127.0.0.1:9090", remote_address = "0.0.0.0:9090" },
+]
+```
 
 ### Architecture
 

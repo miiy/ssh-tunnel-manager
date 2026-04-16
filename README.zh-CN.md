@@ -2,7 +2,7 @@
 
 [English](README.md) | 简体中文
 
-一个用于**管理多个长期运行的 SSH 本地端口转发**的工具：从 `config.toml` 读取多条规则，每条规则运行一个持久的 `ssh -N -L ...` 进程，支持自动重连。
+一个用于**管理多个长期运行的 SSH 端口转发**的工具：从 `config.toml` 读取多条规则，每条规则运行一个持久的 `ssh -N -L/-R ...` 进程，支持自动重连，支持单个 SSH 连接转发多个端口。
 
 ### 为什么需要这个工具？
 
@@ -23,25 +23,21 @@ SSH 本身可以通过 keepalive 参数（`ServerAliveInterval`、`ServerAliveCo
   - macOS/Linux：通常自带
   - Windows：请安装 OpenSSH（或确保 `ssh.exe` 在 `PATH` 里）
 
-### 运行
-
-在项目根目录放好 `config.toml` 后运行：
+### 安装
 
 ```bash
-cargo run --release
-```
-
-也可以本地安装后使用：
-
-```bash
-cargo install --path .
-stm
-```
-
-或从 GitHub 安装：
-
-```bash
+# 从 GitHub 安装
 cargo install --git https://github.com/miiy/ssh-tunnel-manager.git
+
+# 或从本地源码安装
+cargo install --path .
+```
+
+安装后运行：
+
+```bash
+stm                    # 使用当前目录下的 config.toml
+stm /path/to/config    # 使用指定配置文件
 ```
 
 ### 配置（`config.toml`）
@@ -49,17 +45,29 @@ cargo install --git https://github.com/miiy/ssh-tunnel-manager.git
 配置文件结构：
 
 - `[[forwarding]]`：一条转发规则（可写多条）
-- **local_bind**：本地监听地址（可选，默认 `127.0.0.1`）
-- **local_port**：本地监听端口（必填）
-- **remote_address**：远端目标 `host:port`（必填，支持 `[ipv6]:port`）
-- **ssh_host**：SSH 目标（host/IP，或 `~/.ssh/config` 里的 Host alias）
-- **ssh_port**：SSH 端口（可选，默认 `22`）
-- **ssh_user**：SSH 用户名（必填）
-- **ssh_key_path**：私钥路径（可选，推荐；支持 `~`）
-- **ssh_password**：密码（可选；PTY 会自动响应密码/passphrase 提示）
-- **ssh_extra_args**：额外透传给 `ssh` 的参数数组（可选）
+  - **forwards**：端口转发映射数组（必填）
+    - **mode**：`"local"`（-L）或 `"remote"`（-R）（可选，默认 `"local"`）
+    - **local_address**：本地绑定地址和端口，如 `"127.0.0.1:3316"` 或 `"0.0.0.0:8080"`（必填）
+    - **remote_address**：远端目标 `host:port`（必填，支持 `[ipv6]:port`）
+  - **ssh_host**：SSH 目标（host/IP，或 `~/.ssh/config` 里的 Host alias）
+  - **ssh_port**：SSH 端口（可选，默认 `22`）
+  - **ssh_user**：SSH 用户名（必填）
+  - **ssh_key_path**：私钥路径（可选，推荐；支持 `~`）
+  - **ssh_password**：密码（可选；PTY 会自动响应密码/passphrase 提示）
+  - **ssh_extra_args**：额外透传给 `ssh` 的参数数组（可选）
 
-示例请看 `config.toml.example`。
+示例：
+
+```toml
+[[forwarding]]
+ssh_host = "bastion.example.com"
+ssh_user = "deploy"
+ssh_key_path = "~/.ssh/id_ed25519"
+forwards = [
+  { local_address = "127.0.0.1:3316", remote_address = "db.internal:3306" },
+  { mode = "remote", local_address = "127.0.0.1:9090", remote_address = "0.0.0.0:9090" },
+]
+```
 
 ### 架构设计
 
