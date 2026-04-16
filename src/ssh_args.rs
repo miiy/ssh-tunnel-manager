@@ -40,8 +40,6 @@ fn expand_tilde_path(p: &str) -> PathBuf {
 }
 
 pub fn build_invocation(rule: &ForwardingRule) -> Result<Invocation, String> {
-    let (dst_host, dst_port) = parse_host_port(&rule.remote_address)?;
-
     let use_password = rule.ssh_password.is_some();
     let mut ssh_args: Vec<String> = Vec::new();
 
@@ -68,39 +66,40 @@ pub fn build_invocation(rule: &ForwardingRule) -> Result<Invocation, String> {
     ssh_args.push("-o".to_string());
     ssh_args.push("ConnectTimeout=10".to_string());
 
-    // Add -g option to allow remote hosts to connect to local forwarded ports
-    // Only needed for Local mode when binding to non-localhost addresses (e.g., 0.0.0.0)
-    if matches!(rule.mode, TunnelMode::Local)
-        && rule.local_bind != "127.0.0.1"
-        && rule.local_bind != "localhost"
-    {
+    // Check if any local forward binds to a non-localhost address (for -g flag)
+    let needs_gateway = rule.forwards.iter().any(|f| {
+        matches!(f.mode, TunnelMode::Local)
+            && {
+                let (bind, _) =
+                    parse_host_port(&f.local_address).unwrap_or(("127.0.0.1".to_string(), 0));
+                bind != "127.0.0.1" && bind != "localhost"
+            }
+    });
+    if needs_gateway {
         ssh_args.push("-g".to_string());
     }
 
-    let (flag, forward_spec) = match rule.mode {
-        TunnelMode::Local => {
-            // -L local_bind:local_port:dst_host:dst_port
-            (
-                "-L",
-                format!(
-                    "{}:{}:{}:{}",
-                    rule.local_bind, rule.local_port, dst_host, dst_port
-                ),
-            )
-        }
-        TunnelMode::Remote => {
-            // -R remote_bind:remote_port:local_bind:local_port
-            (
-                "-R",
-                format!(
-                    "{}:{}:{}:{}",
-                    dst_host, dst_port, rule.local_bind, rule.local_port
-                ),
-            )
-        }
-    };
-    ssh_args.push(flag.to_string());
-    ssh_args.push(forward_spec);
+    // Generate one -L/-R flag per forward
+    // SSH format: -L [bind_address:]port:host:hostport
+    //             -R [bind_address:]port:host:hostport
+    for forward in &rule.forwards {
+        // Validate addresses by parsing
+        let (local_bind, local_port) = parse_host_port(&forward.local_address)?;
+        let (dst_host, dst_port) = parse_host_port(&forward.remote_address)?;
+
+        let (flag, forward_spec) = match forward.mode {
+            TunnelMode::Local => {
+                // -L bind_address:local_port:dst_host:dst_port
+                ("-L", format!("{}:{}:{}:{}", local_bind, local_port, dst_host, dst_port))
+            }
+            TunnelMode::Remote => {
+                // -R bind_address:remote_port:local_bind:local_port
+                ("-R", format!("{}:{}:{}:{}", dst_host, dst_port, local_bind, local_port))
+            }
+        };
+        ssh_args.push(flag.to_string());
+        ssh_args.push(forward_spec);
+    }
 
     ssh_args.push("-p".to_string());
     ssh_args.push(rule.ssh_port.to_string());
@@ -125,4 +124,3 @@ pub fn build_invocation(rule: &ForwardingRule) -> Result<Invocation, String> {
         args: ssh_args,
     })
 }
-

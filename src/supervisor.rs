@@ -7,28 +7,26 @@ use crate::config::{Config, ForwardingRule, TunnelMode};
 use crate::runner::run_ssh_with_pty;
 use crate::ssh_args::{build_invocation, Invocation};
 
-// format rule full information, for logging
-fn format_rule_full(rule: &ForwardingRule) -> String {
-    match rule.mode {
-        TunnelMode::Local => format!(
-            "local {}:{} -> {} via {}@{}:{}",
-            rule.local_bind,
-            rule.local_port,
-            rule.remote_address,
-            rule.ssh_user,
-            rule.ssh_host,
-            rule.ssh_port
-        ),
-        TunnelMode::Remote => format!(
-            "remote {} <- {}:{} via {}@{}:{}",
-            rule.remote_address,
-            rule.local_bind,
-            rule.local_port,
-            rule.ssh_user,
-            rule.ssh_host,
-            rule.ssh_port
-        ),
-    }
+// format rule summary, for logging
+fn format_rule(rule: &ForwardingRule) -> String {
+    let forwards: Vec<String> = rule
+        .forwards
+        .iter()
+        .map(|f| {
+            let mode_label = match f.mode {
+                TunnelMode::Local => "L",
+                TunnelMode::Remote => "R",
+            };
+            format!("[{}]{} -> {}", mode_label, f.local_address, f.remote_address)
+        })
+        .collect();
+    format!(
+        "{} via {}@{}:{}",
+        forwards.join(", "),
+        rule.ssh_user,
+        rule.ssh_host,
+        rule.ssh_port
+    )
 }
 
 // Supervise a single forwarding rule: run ssh, auto-restart on disconnect, stop on auth failure or shutdown.
@@ -37,11 +35,12 @@ pub async fn supervise_ssh(rule: ForwardingRule, mut shutdown: watch::Receiver<b
     let inv = match build_invocation(&rule) {
         Ok(i) => i,
         Err(e) => {
-            eprintln!("Config error for {}: {}", format_rule_full(&rule), e);
+            eprintln!("Config error for {}: {}", format_rule(&rule), e);
             return Err(io::Error::new(io::ErrorKind::InvalidInput, e));
         }
     };
 
+    let rule_desc = format_rule(&rule);
     let mut attempt: u32 = 0;
 
     // Restart loop: reconnect on failure with exponential backoff (max 20s).
@@ -50,7 +49,7 @@ pub async fn supervise_ssh(rule: ForwardingRule, mut shutdown: watch::Receiver<b
             break;
         }
 
-        println!("Starting ssh forward: {}", format_rule_full(&rule));
+        println!("Starting ssh forward: {}", rule_desc);
 
         // Unified PTY mode: works for both password and non-password modes.
         let password = rule.ssh_password.clone().filter(|s| !s.is_empty());
@@ -78,14 +77,14 @@ pub async fn supervise_ssh(rule: ForwardingRule, mut shutdown: watch::Receiver<b
                     Ok(Ok(exit)) => {
                         let elapsed = start_time.elapsed();
                         eprintln!(
-                            "ssh exited ({}:{} -> {}): code={}, elapsed={:?}",
-                            rule.local_bind, rule.local_port, rule.remote_address, exit.code, elapsed
+                            "ssh exited ({}): code={}, elapsed={:?}",
+                            rule_desc, exit.code, elapsed
                         );
                         // Auth failure: stop retrying this rule to avoid log spam.
                         if exit.auth_failed {
                             eprintln!(
                                 "Authentication failed for {}; not retrying.",
-                                format_rule_full(&rule)
+                                rule_desc
                             );
                             return Ok(());
                         }
@@ -96,14 +95,14 @@ pub async fn supervise_ssh(rule: ForwardingRule, mut shutdown: watch::Receiver<b
                     }
                     Ok(Err(e)) => {
                         eprintln!(
-                            "ssh pty error ({}:{} -> {}): {}",
-                            rule.local_bind, rule.local_port, rule.remote_address, e
+                            "ssh pty error ({}): {}",
+                            rule_desc, e
                         );
                     }
                     Err(e) => {
                         eprintln!(
-                            "ssh pty task join error ({}:{} -> {}): {}",
-                            rule.local_bind, rule.local_port, rule.remote_address, e
+                            "ssh pty task join error ({}): {}",
+                            rule_desc, e
                         );
                     }
                 }
@@ -129,8 +128,8 @@ pub async fn supervise_ssh(rule: ForwardingRule, mut shutdown: watch::Receiver<b
         }
         let backoff = Duration::from_secs((attempt.min(10) as u64).saturating_mul(2).max(1));
         eprintln!(
-            "Restarting in {:?} ({}:{} -> {})",
-            backoff, rule.local_bind, rule.local_port, rule.remote_address
+            "Restarting in {:?} ({})",
+            backoff, rule_desc
         );
         sleep(backoff).await;
     }
@@ -185,4 +184,3 @@ pub async fn run(config: Config) -> io::Result<()> {
 
     Ok(())
 }
-

@@ -1,17 +1,14 @@
 ## Example configuration: copy to `config.toml` and adjust as needed.
 ##
 ## - You can define multiple `[[forwarding]]` rules. Each starts a persistent SSH tunnel with auto-reconnect.
+## - Each rule can have one or more `[[forwarding.forwards]]` entries to forward multiple ports in a single SSH connection.
+## - For single-port rules, you can use the shorthand format with `local_address` and `remote_address` directly on the rule.
 ## - `ssh_password` is optional. When set, the tool runs ssh under a PTY to handle the password prompt.
 ##   Prefer `ssh_key_path` / ssh-agent where possible.
-## - `local_bind` defaults to "127.0.0.1" (localhost-only). Use "0.0.0.0" to listen on all interfaces.
 
 ## All available fields (optional fields commented out with defaults):
 ##
 ##   [[forwarding]]
-##   mode           = "local"                  # "local" (-L) or "remote" (-R). Default: "local"
-##   local_bind     = "127.0.0.1"              # Local bind address. Default: "127.0.0.1"
-##   local_port     = 3316                     # Local port (required)
-##   remote_address = "db.internal:3306"       # Remote address host:port (required, supports [ipv6]:port)
 ##   ssh_host       = "bastion.example.com"    # SSH server hostname, IP, or Host alias from ~/.ssh/config (required)
 ##   ssh_port       = 22                       # SSH port. Default: 22
 ##   ssh_user       = "your-ssh-user"          # SSH username (required)
@@ -21,10 +18,26 @@
 ##     "-o", "StrictHostKeyChecking=accept-new",
 ##     "-J", "jumpuser@jumphost:22",
 ##   ]
+##
+##   # Single-port shorthand:
+##   mode           = "local"                  # "local" (-L) or "remote" (-R). Default: "local"
+##   local_address  = "127.0.0.1:3316"         # Local bind address:port (required)
+##   remote_address = "db.internal:3306"       # Remote address host:port (required)
+##
+##   # Multi-port (alternative to single-port shorthand):
+##   [[forwarding.forwards]]
+##   mode           = "local"                  # "local" (-L) or "remote" (-R). Default: "local"
+##   local_address  = "127.0.0.1:3316"
+##   remote_address = "db.internal:3306"
+##
+##   [[forwarding.forwards]]
+##   mode           = "remote"                 # Can mix -L and -R in one SSH connection
+##   local_address  = "127.0.0.1:8080"
+##   remote_address = "web.internal:80"
 
-## Local port forwarding example
+## You can define multiple [[forwarding]] rules, each creates a separate SSH connection.
 [[forwarding]]
-local_port     = 3316
+local_address  = "127.0.0.1:3316"
 remote_address = "db.internal:3306"
 ssh_host       = "bastion.example.com"
 ssh_user       = "your-ssh-user"
