@@ -48,11 +48,14 @@ pub fn build_invocation(rule: &ForwardingRule) -> Result<Invocation, String> {
     // Exit immediately if forwarding setup fails (so the supervisor can restart)
     ssh_args.push("-o".to_string());
     ssh_args.push("ExitOnForwardFailure=yes".to_string());
+    // Auto-accept new host keys (safer than StrictHostKeyChecking=no, still validates existing keys)
+    ssh_args.push("-o".to_string());
+    ssh_args.push("StrictHostKeyChecking=accept-new".to_string());
     // KeepAlive: detect disconnects and exit promptly
     ssh_args.push("-o".to_string());
-    ssh_args.push("ServerAliveInterval=30".to_string());
+    ssh_args.push("ServerAliveInterval=60".to_string());
     ssh_args.push("-o".to_string());
-    ssh_args.push("ServerAliveCountMax=3".to_string());
+    ssh_args.push("ServerAliveCountMax=5".to_string());
     ssh_args.push("-o".to_string());
     ssh_args.push("TCPKeepAlive=yes".to_string());
     // Unified PTY mode: PTY can handle all interactive prompts (password, passphrase, host key, etc.)

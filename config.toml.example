@@ -14,7 +14,6 @@
 ##   ssh_key_path   = "~/.ssh/id_ed25519"      # SSH private key path (optional)
 ##   ssh_password   = "your-password"          # SSH password (optional; prefer ssh_key_path)
 ##   ssh_extra_args = [                        # Extra arguments passed to ssh (optional)
-##     "-o", "StrictHostKeyChecking=accept-new",
 ##     "-J", "jumpuser@jumphost:22",
 ##   ]
 ##

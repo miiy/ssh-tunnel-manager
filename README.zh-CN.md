@@ -100,8 +100,6 @@ forwards = [
 
 ### 常见建议
 
-- **首次连接不阻塞（推荐）**：避免首次连接卡在 host key 确认提示，可加：
-  - `ssh_extra_args = ["-o", "StrictHostKeyChecking=accept-new"]`
 - **优先使用密钥认证**：比在配置文件里保存明文密码更安全、也更稳定
   - 使用 `ssh_key_path` 配置私钥路径
   - 或使用 ssh-agent（密钥已加载到 ssh-agent 时，SSH 会自动使用，无需配置 `ssh_key_path`）
@@ -109,12 +107,7 @@ forwards = [
 ### 安全提示
 
 - `ssh_password` 是**明文**保存在 `config.toml` 中，请自行控制文件权限与分发方式。
-- **Host key 确认**：本工具默认**不会自动回复** `Are you sure you want to continue connecting (yes/no/[fingerprint])?` 提示。
-  - **原因**：自动接受未知 host key 存在安全风险（可能绕过 SSH 的中间人攻击防护）
-  - **解决方案**：
-    1. 使用 `ssh_extra_args = ["-o", "StrictHostKeyChecking=accept-new"]`（推荐，自动接受新 host key 但会验证）
-    2. 预先手动添加 host key 到 `~/.ssh/known_hosts`（最安全）
-  - 如果检测到 host key 确认提示，工具会终止连接并提示用户配置上述选项。
+- **Host key 验证**：工具默认使用 `StrictHostKeyChecking=accept-new`，会自动接受新 host key，但已有 host key 变更时会拒绝连接，防止中间人攻击。
 
 ## 许可证
 

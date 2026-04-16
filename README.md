@@ -100,8 +100,6 @@ This design ensures:
 
 ### Tips
 
-- **Non-interactive first connection (recommended)**: avoid blocking on host key confirmation:
-  - `ssh_extra_args = ["-o", "StrictHostKeyChecking=accept-new"]`
 - **Prefer key-based authentication**: more secure and more reliable than storing a plaintext password
   - Use `ssh_key_path` to specify a private key file
   - Or use ssh-agent (when keys are loaded in ssh-agent, SSH will automatically use them without needing `ssh_key_path`)
@@ -109,12 +107,7 @@ This design ensures:
 ### Security notes
 
 - `ssh_password` is stored in **plaintext** in `config.toml`. Protect the file and its distribution accordingly.
-- **Host key confirmation**: By default, the tool **does not auto-answer** `Are you sure you want to continue connecting (yes/no/[fingerprint])?` prompts.
-  - **Reason**: Auto-accepting unknown host keys poses a security risk (may bypass SSH's man-in-the-middle attack protection)
-  - **Solutions**:
-    1. Use `ssh_extra_args = ["-o", "StrictHostKeyChecking=accept-new"]` (recommended: auto-accepts new host keys but validates them)
-    2. Pre-populate `~/.ssh/known_hosts` manually (most secure)
-  - If a host key confirmation prompt is detected, the tool will terminate the connection and prompt you to configure the above options.
+- **Host key verification**: the tool uses `StrictHostKeyChecking=accept-new` by default, which auto-accepts new host keys but still validates existing ones. If a host key changes, the connection will be rejected to protect against MITM attacks.
 
 ## License
 
